@@ -224,21 +224,7 @@
                             ] 
                         }] 
                     };
-                    const apiKey = "curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \
-  -H 'Content-Type: application/json' \
-  -H 'X-goog-api-key: GEMINI_API_KEY' \
-  -X POST \
-  -d '{
-    "contents": [
-      {
-        "parts": [
-          {
-            "text": "Explain how AI works in a few words"
-          }
-        ]
-      }
-    ]
-  }'"; // <-- PASTE YOUR API KEY HERE
+                    const apiKey = "YOUR_API_KEY_HERE"; // <-- PASTE YOUR API KEY HERE
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?alt=sse&key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
