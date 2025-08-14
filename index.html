@@ -55,7 +55,7 @@
             Previous
         </button>
         <!-- Page Indicator -->
-        <div id="page-indicator" class="text-gray-600 font-medium text-sm text-center w-32">
+        <div id="page-indicator" class="text-gray-600 font-medium text-lg text-center w-32">
             <!-- This will be updated by JS -->
         </div>
         <!-- Next Button -->
@@ -86,7 +86,7 @@
                     <button id="summarize-btn" class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 border border-gray-300">Summarize this page</button>
                     <button id="more-btn" class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 border border-gray-300">Tell me more</button>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex space-x-2">
                     <input type="text" id="ai-prompt-input" class="flex-grow border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Ask about a specific topic...">
                     <button id="ai-submit-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300">Ask</button>
                 </div>
@@ -105,14 +105,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
             const pageImages = [
-                'https://i.postimg.cc/wMssCdZb/1.jpg', 
-                'https://i.postimg.cc/grF6dTPc/2.jpg',
-                'https://i.postimg.cc/zDLtzH14/3.jpg', 
-                'https://i.postimg.cc/GhGXY0tQ/4.jpg',
-                'https://i.postimg.cc/P5H2Q68k/5.jpg', 
-                'https://i.postimg.cc/RZTGsccJ/6.jpg',
-                'https://i.postimg.cc/PqryBP43/7.jpg', 
-                'https://i.postimg.cc/C194BJVX/8.jpg'
+                'images/1.jpg', 
+                'images/2.jpg',
+                'images/3.jpg', 
+                'images/4.jpg',
+                'images/5.jpg', 
+                'images/6.jpg',
+                'images/7.jpg', 
+                'images/8.jpg'
             ];
             
             const spreadPageNumbers = [
@@ -238,7 +238,7 @@
         ]
       }
     ]
-  }'"; // API key will be injected by the environment
+  }'"; // <-- PASTE YOUR API KEY HERE
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?alt=sse&key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
