@@ -34,6 +34,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        #ai-response-text a {
+            color: #2563eb;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        #ai-response-text a:hover {
+            color: #1d4ed8;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
@@ -94,7 +102,7 @@
                     <div id="ai-loader" class="hidden justify-center items-center h-full">
                         <div class="loader"></div>
                     </div>
-                    <div id="ai-response-text" class="text-gray-700 whitespace-pre-wrap"></div>
+                    <div id="ai-response-text" class="text-gray-700"></div>
                 </div>
             </div>
         </div>
@@ -178,6 +186,7 @@
             
             async function getAnswer(prompt, imageUrl) {
                 aiLoader.style.display = 'flex';
+                aiResponseText.innerHTML = '';
                 const lowerCasePrompt = prompt.toLowerCase();
 
                 // Set the initial text based on the prompt
@@ -201,19 +210,22 @@
                         finalPrompt = `You are an expert magazine guide. The user wants a summary of the attached magazine page. 
                         Please provide a concise summary that is **strictly no more than 250 words**. The summary's length should also be proportional to the amount of text on the page (a short article gets a short summary).
                         Synthesize the information on the page with your own broad knowledge. Do not just repeat the text from the page.
+                        Identify significant topics, people, or places and make them clickable links that perform a Google search (e.g., <a href="https://www.google.com/search?q=Joshua+Tree+National+Park" target="_blank">Joshua Tree National Park</a>).
                         Important: Do not start your response with phrases like "The magazine page provides a fascinating overview". Get straight to the point.
-                        Please provide the response as plain text only, with no markdown or HTML formatting.`;
+                        Please format your response using simple HTML. Use <b> tags for bolding key terms, <i> for emphasis, <ul> with <li> for bullet points, and <a> tags for links. Separate paragraphs with a single <br> tag. Do not use any other HTML tags or markdown.`;
                     } else if (lowerCasePrompt.includes('tell me more')) {
                          finalPrompt = `You are an expert magazine guide. The user wants to "tell me more" about the content on this magazine page. 
                          Your task is to provide a comprehensive and detailed answer. The length should be **no more than twice the amount of text on the spread or 500 words, whichever is greater.**
                          Do not just summarize or repeat the text from the page. Instead, synthesize the information on the page with your own broad knowledge to provide a richer, more detailed explanation. Add interesting facts, historical context, or related information that would be helpful to the reader.
+                         Identify significant topics, people, or places and make them clickable links that perform a Google search (e.g., <a href="https://www.google.com/search?q=Minerva+Hamilton+Hoyt" target="_blank">Minerva Hamilton Hoyt</a>).
                          Important: Do not start your response with phrases like "The magazine page provides a fascinating overview". Get straight to the point.
-                         Please provide the response as plain text only, with no markdown or HTML formatting.`;
+                         Please format your response using simple HTML. Use <b> tags for bolding key terms, <i> for emphasis, and <a> tags for links. Separate paragraphs with a single <br> tag. Do not use any other HTML tags or markdown.`;
                     } else {
                         finalPrompt = `You are an expert magazine guide. The user has asked the following question about the attached magazine page: "${prompt}". 
                         Your task is to provide a comprehensive answer. Do not just summarize or repeat the text from the page. Instead, synthesize the information on the page with your own broad knowledge to provide a richer, more detailed explanation. Add interesting facts, historical context, or related information that would be helpful to the reader.
+                        Identify significant topics, people, or places and make them clickable links that perform a Google search (e.g., <a href="https://www.google.com/search?q=Topic" target="_blank">Topic</a>).
                         Important: Do not start your response with phrases like "The magazine page provides a fascinating overview" or any similar introductory sentence. Get straight to the point.
-                        Please provide the response as plain text only, with no markdown or HTML formatting.`;
+                        Please format your response using simple HTML. Use <b> tags for bolding key terms, <i> for emphasis, and <a> tags for links. Separate paragraphs with a single <br> tag. Do not use any other HTML tags or markdown.`;
                     }
                     
                     const payload = { 
@@ -263,7 +275,7 @@
                                     if (result.candidates && result.candidates[0].content.parts[0].text) {
                                         const textChunk = result.candidates[0].content.parts[0].text;
                                         // Use innerHTML to append so the initial bold tag is preserved
-                                        aiResponseText.innerHTML += textChunk.replace(/\n/g, '<br>');
+                                        aiResponseText.innerHTML += textChunk;
                                     }
                                 } catch (e) {
                                     console.warn('Could not parse JSON chunk:', jsonString);
@@ -346,6 +358,14 @@
             aiPromptInput.addEventListener('keyup', (e) => {
                 if (e.key === 'Enter') {
                     aiSubmitBtn.click();
+                }
+            });
+
+            aiResponseText.addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (link && link.href) {
+                    e.preventDefault();
+                    window.open(link.href, '_blank');
                 }
             });
             
