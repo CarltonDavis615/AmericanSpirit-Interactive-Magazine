@@ -34,14 +34,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        #ai-response-text a {
-            color: #2563eb;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-        #ai-response-text a:hover {
-            color: #1d4ed8;
-        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
@@ -102,7 +94,7 @@
                     <div id="ai-loader" class="hidden justify-center items-center h-full">
                         <div class="loader"></div>
                     </div>
-                    <div id="ai-response-text" class="text-gray-700"></div>
+                    <div id="ai-response-text" class="text-gray-700 whitespace-pre-wrap"></div>
                 </div>
             </div>
         </div>
@@ -210,22 +202,19 @@
                         finalPrompt = `You are an expert magazine guide. The user wants a summary of the attached magazine page. 
                         Please provide a concise summary that is **strictly no more than 250 words**. The summary's length should also be proportional to the amount of text on the page (a short article gets a short summary).
                         Synthesize the information on the page with your own broad knowledge. Do not just repeat the text from the page.
-                        Identify significant topics, people, or places and make them clickable links that perform a Google search (e.g., <a href="https://www.google.com/search?q=Joshua+Tree+National+Park" target="_blank">Joshua Tree National Park</a>).
                         Important: Do not start your response with phrases like "The magazine page provides a fascinating overview". Get straight to the point.
-                        Please format your response using simple HTML. Use <b> tags for bolding key terms, <i> for emphasis, <ul> with <li> for bullet points, and <a> tags for links. Separate paragraphs with a single <br> tag. Do not use any other HTML tags or markdown.`;
+                        Please provide the response as plain text only, with no markdown or HTML formatting.`;
                     } else if (lowerCasePrompt.includes('tell me more')) {
                          finalPrompt = `You are an expert magazine guide. The user wants to "tell me more" about the content on this magazine page. 
                          Your task is to provide a comprehensive and detailed answer. The length should be **no more than twice the amount of text on the spread or 500 words, whichever is greater.**
                          Do not just summarize or repeat the text from the page. Instead, synthesize the information on the page with your own broad knowledge to provide a richer, more detailed explanation. Add interesting facts, historical context, or related information that would be helpful to the reader.
-                         Identify significant topics, people, or places and make them clickable links that perform a Google search (e.g., <a href="https://www.google.com/search?q=Minerva+Hamilton+Hoyt" target="_blank">Minerva Hamilton Hoyt</a>).
                          Important: Do not start your response with phrases like "The magazine page provides a fascinating overview". Get straight to the point.
-                         Please format your response using simple HTML. Use <b> tags for bolding key terms, <i> for emphasis, and <a> tags for links. Separate paragraphs with a single <br> tag. Do not use any other HTML tags or markdown.`;
+                         Please provide the response as plain text only, with no markdown or HTML formatting.`;
                     } else {
                         finalPrompt = `You are an expert magazine guide. The user has asked the following question about the attached magazine page: "${prompt}". 
                         Your task is to provide a comprehensive answer. Do not just summarize or repeat the text from the page. Instead, synthesize the information on the page with your own broad knowledge to provide a richer, more detailed explanation. Add interesting facts, historical context, or related information that would be helpful to the reader.
-                        Identify significant topics, people, or places and make them clickable links that perform a Google search (e.g., <a href="https://www.google.com/search?q=Topic" target="_blank">Topic</a>).
                         Important: Do not start your response with phrases like "The magazine page provides a fascinating overview" or any similar introductory sentence. Get straight to the point.
-                        Please format your response using simple HTML. Use <b> tags for bolding key terms, <i> for emphasis, and <a> tags for links. Separate paragraphs with a single <br> tag. Do not use any other HTML tags or markdown.`;
+                        Please provide the response as plain text only, with no markdown or HTML formatting.`;
                     }
                     
                     const payload = { 
@@ -237,7 +226,7 @@
                         }] 
                     };
                     const apiKey = "AIzaSyCQzF1D2RrWNf7hVRsY6j2Mw3cqnhLQXQU"; 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?alt=sse&key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -249,39 +238,15 @@
                         throw new Error(`API error! status: ${response.status}`);
                     }
 
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    let buffer = '';
-                    let firstChunk = true;
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-
-                        if (firstChunk) {
-                            aiLoader.style.display = 'none';
-                            firstChunk = false;
-                        }
-
-                        buffer += decoder.decode(value, { stream: true });
-                        const lines = buffer.split('\n');
-                        buffer = lines.pop();
-
-                        for (const line of lines) {
-                            if (line.trim().startsWith('data:')) {
-                                const jsonString = line.substring(5).trim();
-                                try {
-                                    const result = JSON.parse(jsonString);
-                                    if (result.candidates && result.candidates[0].content.parts[0].text) {
-                                        const textChunk = result.candidates[0].content.parts[0].text;
-                                        // Use innerHTML to append so the initial bold tag is preserved
-                                        aiResponseText.innerHTML += textChunk;
-                                    }
-                                } catch (e) {
-                                    console.warn('Could not parse JSON chunk:', jsonString);
-                                }
-                            }
-                        }
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        aiResponseText.innerHTML += text.replace(/\n/g, '<br>');
+                    } else {
+                       aiResponseText.innerHTML += "Sorry, I couldn't get a response. The model might have returned an empty result.";
                     }
 
                 } catch (error) {
@@ -358,14 +323,6 @@
             aiPromptInput.addEventListener('keyup', (e) => {
                 if (e.key === 'Enter') {
                     aiSubmitBtn.click();
-                }
-            });
-
-            aiResponseText.addEventListener('click', (e) => {
-                const link = e.target.closest('a');
-                if (link && link.href) {
-                    e.preventDefault();
-                    window.open(link.href, '_blank');
                 }
             });
             
