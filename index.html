@@ -178,7 +178,6 @@
             
             async function getAnswer(prompt, imageUrl) {
                 aiLoader.style.display = 'flex';
-                aiResponseText.innerHTML = '';
                 const lowerCasePrompt = prompt.toLowerCase();
 
                 // Set the initial text based on the prompt
@@ -226,7 +225,7 @@
                         }] 
                     };
                     const apiKey = "AIzaSyCQzF1D2RrWNf7hVRsY6j2Mw3cqnhLQXQU"; 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?alt=sse&key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -238,15 +237,39 @@
                         throw new Error(`API error! status: ${response.status}`);
                     }
 
-                    const result = await response.json();
-                    
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const text = result.candidates[0].content.parts[0].text;
-                        aiResponseText.innerHTML += text.replace(/\n/g, '<br>');
-                    } else {
-                       aiResponseText.innerHTML += "Sorry, I couldn't get a response. The model might have returned an empty result.";
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    let firstChunk = true;
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        if (firstChunk) {
+                            aiLoader.style.display = 'none';
+                            firstChunk = false;
+                        }
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            if (line.trim().startsWith('data:')) {
+                                const jsonString = line.substring(5).trim();
+                                try {
+                                    const result = JSON.parse(jsonString);
+                                    if (result.candidates && result.candidates[0].content.parts[0].text) {
+                                        const textChunk = result.candidates[0].content.parts[0].text;
+                                        // Use innerHTML to append so the initial bold tag is preserved
+                                        aiResponseText.innerHTML += textChunk.replace(/\n/g, '<br>');
+                                    }
+                                } catch (e) {
+                                    console.warn('Could not parse JSON chunk:', jsonString);
+                                }
+                            }
+                        }
                     }
 
                 } catch (error) {
